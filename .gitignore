@@ -1,0 +1,10 @@
+node_modules/
+local.settings.json
+.env
+.env.*
+!.env.example
+.azure/
+.deploy/
+*.zip
+*.log
+.DS_Store

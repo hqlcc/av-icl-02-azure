@@ -1,0 +1,146 @@
+TAP version 13
+# (node:25) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: SQL usa parâmetros para que um comentário não seja interpretado como comando
+ok 1 - SQL usa parâmetros para que um comentário não seja interpretado como comando
+  ---
+  duration_ms: 1.587492
+  type: 'test'
+  ...
+# Subtest: reentrega com violação de chave é ignorada, mas falhas reais são propagadas
+ok 2 - reentrega com violação de chave é ignorada, mas falhas reais são propagadas
+  ---
+  duration_ms: 0.576546
+  type: 'test'
+  ...
+# Subtest: totais SQL são retornados como números com somente três chaves
+ok 3 - totais SQL são retornados como números com somente três chaves
+  ---
+  duration_ms: 0.632489
+  type: 'test'
+  ...
+# Subtest: conexão exige TLS e valida o certificado do SQL
+ok 4 - conexão exige TLS e valida o certificado do SQL
+  ---
+  duration_ms: 0.135924
+  type: 'test'
+  ...
+# (node:26) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: interpreta o contrato real do endpoint e preserva o ID
+ok 5 - interpreta o contrato real do endpoint e preserva o ID
+  ---
+  duration_ms: 1.190848
+  type: 'test'
+  ...
+# Subtest: rejeita corpo inesperado, comentário vazio e texto excessivo
+ok 6 - rejeita corpo inesperado, comentário vazio e texto excessivo
+  ---
+  duration_ms: 0.268573
+  type: 'test'
+  ...
+# Subtest: preserva os três sentimentos aceitos no enunciado
+ok 7 - preserva os três sentimentos aceitos no enunciado
+  ---
+  duration_ms: 0.224827
+  type: 'test'
+  ...
+# Subtest: mixed usa o maior score e empate vira neutral
+ok 8 - mixed usa o maior score e empate vira neutral
+  ---
+  duration_ms: 0.133461
+  type: 'test'
+  ...
+# Subtest: não inventa uma classificação quando a resposta da IA é inválida
+ok 9 - não inventa uma classificação quando a resposta da IA é inválida
+  ---
+  duration_ms: 0.194361
+  type: 'test'
+  ...
+# Subtest: cada coleta ganha UUID próprio, mesmo com ID de origem repetido
+ok 10 - cada coleta ganha UUID próprio, mesmo com ID de origem repetido
+  ---
+  duration_ms: 0.557547
+  type: 'test'
+  ...
+# Subtest: fila aceita objeto e string JSON, preservando o mesmo eventId
+ok 11 - fila aceita objeto e string JSON, preservando o mesmo eventId
+  ---
+  duration_ms: 0.371147
+  type: 'test'
+  ...
+# Subtest: fila rejeita JSON corrompido, data, versão, sentimento e scores inválidos
+ok 12 - fila rejeita JSON corrompido, data, versão, sentimento e scores inválidos
+  ---
+  duration_ms: 0.202374
+  type: 'test'
+  ...
+# Subtest: timer consulta, analisa o texto e publica o resultado no binding
+ok 13 - timer consulta, analisa o texto e publica o resultado no binding
+  ---
+  duration_ms: 0.462774
+  type: 'test'
+  ...
+# Subtest: falha da fonte não gera mensagem nem chamada à IA
+ok 14 - falha da fonte não gera mensagem nem chamada à IA
+  ---
+  duration_ms: 0.664878
+  type: 'test'
+  ...
+# Subtest: falha da IA não gera uma classificação artificial
+ok 15 - falha da IA não gera uma classificação artificial
+  ---
+  duration_ms: 0.216696
+  type: 'test'
+  ...
+# Subtest: consumidor entrega o evento completo ao banco
+ok 16 - consumidor entrega o evento completo ao banco
+  ---
+  duration_ms: 0.263185
+  type: 'test'
+  ...
+# Subtest: falha SQL propaga ao runtime para permitir nova tentativa
+ok 17 - falha SQL propaga ao runtime para permitir nova tentativa
+  ---
+  duration_ms: 0.158137
+  type: 'test'
+  ...
+# Subtest: mensagem malformada não chega ao banco
+ok 18 - mensagem malformada não chega ao banco
+  ---
+  duration_ms: 0.148312
+  type: 'test'
+  ...
+# Subtest: HTTP retorna exatamente as três chaves e os números consultados
+ok 19 - HTTP retorna exatamente as três chaves e os números consultados
+  ---
+  duration_ms: 0.155063
+  type: 'test'
+  ...
+# Subtest: banco vazio retorna contagens zero
+ok 20 - banco vazio retorna contagens zero
+  ---
+  duration_ms: 0.105508
+  type: 'test'
+  ...
+# Subtest: HTTP devolve 503 sem expor credenciais e sem simular contagens
+ok 21 - HTTP devolve 503 sem expor credenciais e sem simular contagens
+  ---
+  duration_ms: 0.231327
+  type: 'test'
+  ...
+# Subtest: smoke rejeita resposta com chaves extras, números negativos ou strings
+ok 22 - smoke rejeita resposta com chaves extras, números negativos ou strings
+  ---
+  duration_ms: 4.610159
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 268.58045

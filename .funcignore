@@ -1,0 +1,11 @@
+.git*
+.github/
+tests/
+scripts/
+docs/
+sql/
+.deploy/
+local.settings.json
+local.settings.example.json
+*.md
+*.zip

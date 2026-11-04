@@ -1,0 +1,26 @@
+{
+  "name": "av-icl-02-azure",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Análise de sentimentos com Timer, Queue e HTTP Functions na Azure",
+  "main": "src/functions/*.js",
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "scripts": {
+    "start": "func start",
+    "test": "node --test tests/*.test.js",
+    "db:init": "node scripts/init-db.js",
+    "smoke": "node scripts/smoke.js",
+    "package": "bash scripts/package.sh"
+  },
+  "dependencies": {
+    "@azure/ai-text-analytics": "5.1.0",
+    "@azure/functions": "4.17.0",
+    "mssql": "12.7.13"
+  },
+  "overrides": {
+    "@azure/identity": "4.13.0",
+    "uuid": "11.1.1"
+  }
+}
