@@ -10,7 +10,7 @@
 | Nenhuma função aparece | `host.json` na raiz do ZIP, dependências presentes, `main` em `package.json`, Node.js 22 e runtime v4. Consultar logs de inicialização. |
 | Timer não executa | `AzureWebJobs.coletarComentario.Disabled` deve ser `false`; verificar Storage e logs do host. |
 | SQL: login failed | Credenciais do usuário contido devem usar o banco `sentimentos`, não `master`. Verificar inicialização da tabela/usuário. |
-| SQL: IP não permitido | Conferir firewall. Para inicialização local, `DEPLOY_CLIENT_IP` deve ser o IPv4 de saída real. Regras podem levar alguns minutos para propagar. |
+| SQL: IP não permitido | Conferir a regra AllowAzureServices e aguardar sua propagação. A inicialização publicada roda dentro da Azure. Para desenvolvimento local, liberar apenas o próprio IPv4 no firewall do SQL. |
 | Erro 503 no endpoint | A HTTP Function está acessível, mas não consultou SQL. Verificar tabela, conexão, credenciais e firewall. |
 | Totais não crescem | Verificar timer, cota Language, fila `sentimentos` e `sentimentos-poison`. Depois de corrigir a causa, reprocessar mensagens problemáticas preservando `eventId`. |
 | Valores só aparecem após alguns segundos | Fila e persistência são assíncronas. O HTTP mostra apenas registros já confirmados no SQL. |

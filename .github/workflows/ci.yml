@@ -13,4 +13,4 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm test
-      - run: bash -n scripts/provision.sh scripts/package.sh scripts/timer.sh
+      - run: for file in scripts/*.sh; do bash -n "$file" || exit; done

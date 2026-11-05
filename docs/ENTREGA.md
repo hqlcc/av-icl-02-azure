@@ -1,10 +1,10 @@
-# Links para entrega
+# Entrega da AV-ICL-02
 
-O repositório foi criado no GitHub. A implantação e a validação na Azure estão pendentes.
+| Item | Link ou estado |
+| --- | --- |
+| Repositório público | [hqlcc/av-icl-02-azure](https://github.com/hqlcc/av-icl-02-azure) |
+| Comandos executados para criar os recursos | [Registro de execução](COMANDOS_EXECUTADOS.md) |
+| Endereço da HTTP Function | [GET /api/sentimentos/totais](https://func-icl02-02a82191.azurewebsites.net/api/sentimentos/totais) |
+| Verificação pública em 05/11/2026 | Pendente. A tentativa de acesso expirou antes de receber uma resposta HTTP. |
 
-- Repositório Git: https://github.com/hqlcc/av-icl-02-azure
-- Endpoint público: ainda não implantado.
-- Comandos efetivamente executados na Azure: ainda não há execução autenticada.
-- Teste integrado real: pendente de implantação.
-
-O script de implantação preencherá este arquivo com o hostname real. Não entregar este arquivo com campos pendentes.
+A Azure criou os recursos. Falta concluir a inicialização da tabela, publicar as funções e observar o aumento dos totais. Para concluir com o grupo existente, siga a seção “Concluir a implantação existente” no [README](../README.md). O teste de ponta a ponta gera `docs/evidencia-fluxo.json` com os totais antes e depois.

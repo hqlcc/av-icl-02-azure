@@ -4,13 +4,10 @@ const sql = require('mssql');
 const { databaseConfig } = require('../src/lib/database');
 const { required } = require('../src/lib/services');
 
-async function main() {
-  // SQL_USER/PASSWORD são de administrador somente neste processo de implantação.
-  const pool = await new sql.ConnectionPool(databaseConfig()).connect();
+async function initializeDatabase(config, username, password) {
+  const pool = await new sql.ConnectionPool(config).connect();
   try {
     await pool.request().batch(fs.readFileSync(path.join(__dirname, '../sql/schema.sql'), 'utf8'));
-    const username = required('SQL_APP_USER');
-    const password = required('SQL_APP_PASSWORD');
     if (!/^[a-zA-Z][a-zA-Z0-9_]{2,63}$/.test(username)) throw new Error('Nome de usuário SQL inválido.');
     // CREATE USER não aceita parâmetro diretamente; QUOTENAME protege o SQL dinâmico.
     await pool.request()
@@ -30,4 +27,8 @@ async function main() {
   } finally { await pool.close(); }
 }
 
-main().catch(error => { console.error('Inicialização SQL falhou:', error.code || error.name); process.exitCode = 1; });
+if (require.main === module) {
+  initializeDatabase(databaseConfig(), required('SQL_APP_USER'), required('SQL_APP_PASSWORD'))
+    .catch(error => { console.error('Inicialização SQL falhou:', error.code || error.name, error.number || ''); process.exitCode = 1; });
+}
+module.exports = { initializeDatabase };

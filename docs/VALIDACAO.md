@@ -1,28 +1,19 @@
-# Estado da validação
+# Validação da atividade
 
-Preparação em 28/10/2026. Este documento separa o que foi conferido do que depende da assinatura Azure.
+| Verificação | Resultado registrado |
+| --- | --- |
+| Origem dos comentários | O endpoint do professor respondeu HTTP 200 com um objeto contendo `id` e `comentario`. O cliente da aplicação também leu um comentário desse serviço. |
+| Testes automatizados | 22 aprovados em Node.js 22. [Saída local](TESTES_LOCAIS.txt) e [execução no GitHub Actions](https://github.com/hqlcc/av-icl-02-azure/actions/runs/41923596632). Em 05/11/2026, os mesmos 22 testes passaram em Node.js 24. |
+| Infraestrutura Azure | Grupo de recursos, Storage Account, fila `sentimentos`, Azure AI Language F0, servidor SQL, banco `sentimentos` e Function App criados. [Histórico de comandos](COMANDOS_EXECUTADOS.md). |
+| Publicação | Os pacotes do instalador SQL e das funções foram gerados e passaram pela verificação de integridade ZIP. O registro disponível termina antes do envio dos pacotes. |
+| Acesso ao SQL | A primeira inicialização pelo terminal terminou com `ESOCKET`. A regra temporária de firewall foi removida. O script de retomada usa um instalador executado dentro da Function App. |
+| Teste público | Em 05/11/2026, a tentativa de acesso à rota expirou na conexão. A confirmação da tabela, dos três triggers e de totais crescentes depende de uma publicação e de um teste na assinatura Azure. |
 
-## Executado localmente
+O teste integrado pode ser executado após a publicação:
 
-- O endpoint real do professor respondeu HTTP 200 com `{ "id": 21, "comentario": "A compra foi simples e não tive nenhum problema." }` em uma consulta. Uma chamada posterior usando o próprio cliente da aplicação também leu um comentário válido.
-- 22 testes automatizados em Node.js 22: aprovados. Saída integral em `TESTES_LOCAIS.txt`.
-- Auditoria de dependências de produção: `npm audit --omit=dev` sem vulnerabilidades reportadas após os ajustes no lockfile.
-- Sintaxe dos três scripts Bash: validada com `bash -n`.
-- Módulos JavaScript: importação sem erros. Importar fora do host não registra triggers e não substitui um teste Azure.
-- Parâmetros principais de criação/publicação conferidos com a ajuda da Azure CLI 2.91.0 instalada.
-- Pacote de publicação gerado com `host.json` na raiz, fontes e dependências de produção, sem configurações locais ou segredos.
+```bash
+source .deploy/resources.env
+npm run smoke -- "$TOTALS_URL"
+```
 
-## Limite encontrado no ambiente de preparação
-
-Foi instalado Azure Functions Core Tools 4.16.0 e tentada a inicialização local. O host não conseguiu baixar o extension bundle da Microsoft por indisponibilidade de conexão nesse ambiente. Assim, **não foi confirmada a execução dos triggers no host local**. Os testes automatizados verificam a lógica com dependências controladas.
-
-## Ainda pendente
-
-- Autenticação e escolha da assinatura Azure.
-- Criação dos recursos e execução do esquema no Azure SQL real.
-- Chamada autenticada ao Azure AI Language.
-- Disparo real do timer, publicação/consumo da fila e persistência SQL.
-- Endpoint HTTPS público, com HTTP 200 e totais crescentes.
-- Inclusão do link público do endpoint após a validação na Azure.
-
-Após implantar, executar `npm run smoke -- "$TOTALS_URL"` e revisar os logs das três funções. O teste gera `evidencia-fluxo.json` somente ao observar os dados reais aumentando. Não há evidência fabricada de deploy ou integração neste projeto.
+Ele exige HTTP 200, as três categorias e aumento do total entre duas leituras. O arquivo `docs/evidencia-fluxo.json` guarda o resultado real quando o teste passa.

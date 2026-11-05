@@ -2,7 +2,7 @@
 
 Aplicação serverless que coleta comentários, analisa o sentimento com Azure AI Language, grava cada resultado no Azure SQL Database por meio de uma fila e fornece os totais em JSON.
 
-A implementação passou nos testes locais. A implantação na Azure e a verificação do endpoint público estão pendentes. Acompanhe os links em [docs/ENTREGA.md](docs/ENTREGA.md).
+Os 22 testes passaram. A Azure criou a infraestrutura em Canada Central. A publicação das funções e a confirmação dos totais pela rota HTTP continuam pendentes. Consulte os [links de entrega](docs/ENTREGA.md) e o [registro dos comandos executados](docs/COMANDOS_EXECUTADOS.md).
 
 ## Atendimento ao enunciado
 
@@ -14,7 +14,7 @@ A implementação passou nos testes locais. A implantação na Azure e a verific
 | Uma Queue Function gravar em SQL Server na Azure | `salvarSentimento`: Queue Trigger e `INSERT` parametrizado no Azure SQL Database |
 | HTTP Function listar os totais | `GET /api/sentimentos/totais`, consulta SQL agregada |
 | Repositório Git | Todo o código, esquema SQL, scripts e testes neste projeto |
-| Lista dos comandos de criação dos recursos | [Comandos Azure](docs/COMANDOS_AZURE.md) e, após executar a implantação, `docs/COMANDOS_EXECUTADOS.md` |
+| Lista dos comandos de criação dos recursos | [Comandos executados](docs/COMANDOS_EXECUTADOS.md) e [roteiro da implantação](docs/COMANDOS_AZURE.md) |
 | Link público para avaliação | Gerado a partir do hostname real da Function App em `docs/ENTREGA.md` |
 
 Azure SQL Database é o serviço relacional gerenciado da família SQL Server na Azure. A aplicação utiliza T-SQL e o protocolo de conexão do SQL Server.
@@ -49,7 +49,8 @@ A fila é o recurso do Azure Storage; a Queue Function é sua consumidora. A cha
 | `src/lib/database.js` | Conexão SQL, INSERT e agregação |
 | `sql/schema.sql` | Tabela, chave primária, índice e restrições |
 | `scripts/provision.sh` | Criação/configuração dos recursos, banco e publicação |
-| `scripts/init-db.js` | Execução do esquema SQL e usuário restrito da aplicação |
+| `scripts/init-db.js` | Execução do esquema SQL e configuração do usuário restrito |
+| `scripts/publicar.sh` | Inicialização da tabela a partir da Azure e publicação das três funções |
 | `scripts/package.sh` | Pacote de publicação com dependências |
 | `scripts/smoke.js` | Verificação do endpoint e crescimento dos totais |
 | `scripts/timer.sh` | Pausa/retomada do timer |
@@ -65,9 +66,24 @@ A fila é o recurso do Azure Storage; a Queue Function é sua consumidora. A cha
 - **SQL:** comandos parametrizados, conexão TLS com validação do certificado e usuário da aplicação com apenas `SELECT` e `INSERT` na tabela. O administrador é usado somente na preparação.
 - **Configuração:** credenciais ficam em Application Settings e em arquivos locais ignorados pelo Git. O pacote de deploy não inclui esses arquivos. Não usar `set -x` nos scripts, pois isso poderia imprimir segredos.
 - **Dependências:** o lockfile fixa as versões. Há overrides temporários de `@azure/identity` para 4.13.0 e de `uuid` para 11.1.1, corrigindo a árvore transitiva apontada por `npm audit` ([MSAL](https://github.com/advisories/GHSA-xcx6-jx8p-x3h5), [uuid](https://github.com/advisories/GHSA-w5hq-g745-h8pq)). Este projeto usa autenticação SQL; não usa os fluxos Entra ID dessa dependência. Revisar os overrides antes de adotar autenticação Entra ID.
-- **Rede:** para simplificar a avaliação, o SQL aceita conexões originadas na Azure com a regra `AllowAzureServices`, ainda exigindo autenticação. Essa regra abrange serviços Azure de outras assinaturas também. Um ambiente de produção deveria restringir a rede com VNet/private endpoints. O IP da máquina que implanta é liberado temporariamente e removido ao final.
+- **Rede:** para simplificar a avaliação, o SQL aceita conexões originadas na Azure com a regra `AllowAzureServices`, ainda exigindo autenticação. Essa regra abrange serviços Azure de outras assinaturas também. Um ambiente de produção deveria restringir a rede com VNet/private endpoints. A tabela e o usuário da aplicação são inicializados na própria Function App. O pacote temporário aceita somente POST autenticado com a chave mestra. A senha do administrador é enviada por HTTPS à própria aplicação. O pacote definitivo substitui o instalador e contém apenas as três funções da atividade.
 
-## Implantar na Azure
+## Concluir a implantação existente
+
+1. Extraia o ZIP. No GitHub, envie o conteúdo para a raiz de [hqlcc/av-icl-02-azure](https://github.com/hqlcc/av-icl-02-azure), com `README.md`, `package.json` e `host.json` no mesmo nível.
+2. Abra o [Azure Cloud Shell em Bash](https://shell.azure.com/bash) na assinatura Azure for Students usada na atividade. No menu de arquivos do Cloud Shell, envie o ZIP original para a sua pasta pessoal.
+3. Execute os comandos abaixo. A retomada usa o grupo existente `rg-avicl02-02a82191`. O script pede a senha do administrador SQL. Se você não a tiver, pressione Enter e digite `REDEFINIR` para autorizar a troca dessa senha no servidor dedicado da atividade.
+
+```bash
+mkdir -p ~/av-icl-02-entrega
+unzip -o ~/av-icl-02-azure.zip -d ~/av-icl-02-entrega
+cd ~/av-icl-02-entrega
+bash scripts/retomar.sh
+```
+
+4. Aguarde a mensagem `PASS: endpoint válido e novos registros no banco.`. Baixe os arquivos atualizados da pasta `docs` do Cloud Shell e inclua `COMANDOS_EXECUTADOS.md`, `ENTREGA.md` e `evidencia-fluxo.json` na pasta `docs` do GitHub. Abra o link em `ENTREGA.md` antes de enviá-lo ao professor.
+
+## Implantar em uma nova assinatura
 
 Usar **Bash** no Azure Cloud Shell, Linux ou WSL. No Windows, não colar o script Bash diretamente no PowerShell. Pré-requisitos: assinatura Azure ativa com permissões para os recursos, Azure CLI atual, Node.js 22, npm, Python 3 e zip. O Cloud Shell já possui Azure CLI e uma sessão autenticada; verifique as demais ferramentas com `command -v az node npm python3 zip`.
 
@@ -82,8 +98,8 @@ az account list --query "[].{nome:name,id:id,padrao:isDefault}" -o table
 export AZURE_SUBSCRIPTION_ID="ID-DA-SUA-ASSINATURA"
 
 # Opcional: defina uma região autorizada pela assinatura antes da 1ª execução.
-export LOCATION="eastus2"
-export LANGUAGE_LOCATION="eastus"
+export LOCATION="canadacentral"
+export LANGUAGE_LOCATION="canadacentral"
 
 # Repositório da atividade
 export REPOSITORY_URL="https://github.com/hqlcc/av-icl-02-azure"

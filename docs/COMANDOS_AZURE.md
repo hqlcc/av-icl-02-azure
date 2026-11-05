@@ -1,6 +1,6 @@
 # Comandos de criação e configuração na Azure
 
-Esta lista acompanha `scripts/provision.sh` e descreve os comandos **preparados** para execução. Não comprova que os recursos já foram criados. O registro real, com horários e resultados, será gerado em `docs/COMANDOS_EXECUTADOS.md` durante a implantação autenticada.
+Esta lista acompanha `scripts/provision.sh` e descreve os comandos **preparados** para execução. Não comprova que os recursos já foram criados. Consulte o [registro da execução autenticada](COMANDOS_EXECUTADOS.md) para os resultados; os passos de retomada constam em `scripts/retomar.sh`.
 
 As variáveis de nomes ficam em `.deploy/resources.env`. Credenciais não devem ser publicadas. O código integral e executável está em `scripts/provision.sh`.
 
@@ -13,7 +13,7 @@ export AZURE_SUBSCRIPTION_ID="ID-DA-ASSINATURA"
 bash scripts/provision.sh
 ```
 
-## Comandos usados pelo script
+## scripts/provision.sh
 
 ```bash
 az account set --subscription "$AZURE_SUBSCRIPTION_ID"
@@ -81,20 +81,10 @@ az functionapp create --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" 
 az functionapp config appsettings set --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --settings @ARQUIVO_TEMPORARIO_SEGURO --output none # contém as configurações; timer inicialmente desabilitado
 ```
 
-```bash
-python3 scripts/client-ip.py
-```
+## scripts/publicar.sh
 
 ```bash
-az sql server firewall-rule delete --name DeployClient --server "$SQL_SERVER_NAME" --resource-group "$RESOURCE_GROUP"
-```
-
-```bash
-az sql server firewall-rule create --name DeployClient --server "$SQL_SERVER_NAME" --resource-group "$RESOURCE_GROUP" --start-ip-address "$DEPLOY_CLIENT_IP" --end-ip-address "$DEPLOY_CLIENT_IP"
-```
-
-```bash
-npm ci --ignore-scripts
+npm ci --ignore-scripts --no-fund --no-audit
 ```
 
 ```bash
@@ -102,11 +92,27 @@ npm test
 ```
 
 ```bash
-npm run db:init # credenciais administrativas somente no ambiente deste processo
+npm run package
 ```
 
 ```bash
-npm run package
+python3 scripts/bootstrap.py build
+```
+
+```bash
+az functionapp show --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --query "defaultHostName || properties.defaultHostName" -o tsv
+```
+
+```bash
+az functionapp deployment source config-zip --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --src .deploy/bootstrap.zip --build-remote false --output none
+```
+
+```bash
+az functionapp keys list --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --query masterKey -o tsv # valor mantido em memória
+```
+
+```bash
+python3 scripts/bootstrap.py init
 ```
 
 ```bash
@@ -118,5 +124,5 @@ az functionapp config appsettings set --name "$FUNCTION_APP" --resource-group "$
 ```
 
 ```bash
-az functionapp show --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --query defaultHostName -o tsv
+az functionapp show --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --query "defaultHostName || properties.defaultHostName" -o tsv
 ```

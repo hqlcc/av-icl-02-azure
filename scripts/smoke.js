@@ -19,14 +19,27 @@ async function main() {
     validateTotals(data);
     return data;
   };
-  const before = await read();
+  // A troca do pacote e a ativação do timer reiniciam o host na Azure.
+  const deadline = Date.now() + 180000;
+  let before;
+  for (;;) {
+    try {
+      before = await read();
+      break;
+    } catch (error) {
+      if (Date.now() >= deadline) throw error;
+      console.log('Aguardando a primeira resposta válida da função:', error.message);
+      await delay(10000);
+    }
+  }
+  const started = Date.now();
   console.log('Totais iniciais:', before);
   for (let attempt = 1; attempt <= 12; attempt++) {
     await delay(10000);
     const after = await read();
     for (const key of Object.keys(before)) assert.ok(after[key] >= before[key], 'Contagem diminuiu.');
     if (validateTotals(after) > validateTotals(before)) {
-      const evidence = { checkedAt: new Date().toISOString(), url, before, after, elapsedSeconds: attempt * 10, result: 'PASS' };
+      const evidence = { checkedAt: new Date().toISOString(), url, before, after, elapsedSeconds: Math.round((Date.now() - started) / 1000), result: 'PASS' };
       fs.mkdirSync('docs', { recursive: true });
       fs.writeFileSync('docs/evidencia-fluxo.json', JSON.stringify(evidence, null, 2) + '\n');
       console.log('PASS: endpoint válido e novos registros no banco.', after);

@@ -40,14 +40,7 @@ printf '\n## Execução de %s\n\n' "$(date -u +%FT%TZ)" >> "$logfile"
 
 # Registra cada comando antes da execução e o exit code depois. A descrição é
 # deliberadamente independente dos argumentos para nunca registrar segredos.
-run() {
-  local description="$1"; shift
-  printf '\n```bash\n%s\n```\n' "$description" >> "$logfile"
-  local result=0
-  "$@" || result=$?
-  printf '\nExit code: `%s`.\n' "$result" >> "$logfile"
-  return "$result"
-}
+source scripts/registro.sh
 
 run 'az account set --subscription "$AZURE_SUBSCRIPTION_ID"' az account set --subscription "$AZURE_SUBSCRIPTION_ID"
 run 'az account show --query "{name:name,id:id}" -o json' az account show --query '{name:name,id:id}' -o json
@@ -98,40 +91,4 @@ run 'az functionapp config appsettings set --name "$FUNCTION_APP" --resource-gro
   az functionapp config appsettings set --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --settings "@$settings_file" --output none
 rm -f "$settings_file"
 
-# IP de quem está implantando: pode ser informado para ambientes com proxy.
-if [[ -z "${DEPLOY_CLIENT_IP:-}" ]]; then
-  DEPLOY_CLIENT_IP="$(run 'python3 scripts/client-ip.py' \
-    python3 scripts/client-ip.py)"
-fi
-python3 -c 'import ipaddress,sys; ipaddress.IPv4Address(sys.argv[1])' "$DEPLOY_CLIENT_IP"
-cleanup() {
-  rm -f "$settings_file"
-  run 'az sql server firewall-rule delete --name DeployClient --server "$SQL_SERVER_NAME" --resource-group "$RESOURCE_GROUP"' \
-    az sql server firewall-rule delete --name DeployClient --server "$SQL_SERVER_NAME" --resource-group "$RESOURCE_GROUP" --output none || true
-}
-trap cleanup EXIT
-run 'az sql server firewall-rule create --name DeployClient --server "$SQL_SERVER_NAME" --resource-group "$RESOURCE_GROUP" --start-ip-address "$DEPLOY_CLIENT_IP" --end-ip-address "$DEPLOY_CLIENT_IP"' \
-  az sql server firewall-rule create --name DeployClient --server "$SQL_SERVER_NAME" --resource-group "$RESOURCE_GROUP" --start-ip-address "$DEPLOY_CLIENT_IP" --end-ip-address "$DEPLOY_CLIENT_IP" --output none
-
-run 'npm ci --ignore-scripts' npm ci --ignore-scripts --no-fund --no-audit
-run 'npm test' npm test
-export SQL_USER="$SQL_ADMIN" SQL_PASSWORD="$SQL_ADMIN_PASSWORD"
-run 'npm run db:init # credenciais administrativas somente no ambiente deste processo' npm run db:init
-unset SQL_PASSWORD SQL_USER
-run 'npm run package' npm run package
-run 'az functionapp deployment source config-zip --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --src .deploy/functionapp.zip --build-remote false' \
-  az functionapp deployment source config-zip --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --src .deploy/functionapp.zip --build-remote false --output none
-run 'az functionapp config appsettings set --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --settings AzureWebJobs.coletarComentario.Disabled=false --output none' \
-  az functionapp config appsettings set --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --settings AzureWebJobs.coletarComentario.Disabled=false --output none
-hostname="$(run 'az functionapp show --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --query defaultHostName -o tsv' \
-  az functionapp show --name "$FUNCTION_APP" --resource-group "$RESOURCE_GROUP" --query defaultHostName -o tsv)"
-export TOTALS_URL="https://$hostname/api/sentimentos/totais"
-printf '\nTOTALS_URL=%q\n' "$TOTALS_URL" >> .deploy/resources.env
-{
-  printf '# Links para entrega\n\n- Repositório: %s\n' "${REPOSITORY_URL:-PENDENTE: adicionar a URL real do GitHub}"
-  printf -- '- Endpoint: %s\n\n' "$TOTALS_URL"
-  printf 'Implantação realizada em: %s UTC.\n\n' "$(date -u +%FT%TZ)"
-  printf 'Validação do fluxo: consultar docs/evidencia-fluxo.json após npm run smoke.\n'
-} > docs/ENTREGA.md
-echo "Implantação concluída. Aguarde o host iniciar e execute: npm run smoke -- $TOTALS_URL"
-echo "A coleta está ATIVA a cada 10 s. Para pausar: bash scripts/timer.sh pause"
+bash scripts/publicar.sh
